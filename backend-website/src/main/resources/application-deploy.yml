@@ -1,0 +1,10 @@
+spring:
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    url: jdbc:postgresql://localhost22:5433/office_db
+    username: postgres
+    password: Abc@@123
+    
+logging:
+  level:
+    root: WARN

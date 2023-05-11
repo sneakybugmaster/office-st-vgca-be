@@ -1,0 +1,110 @@
+server:
+  port: 8080
+spring:
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    url: 'jdbc:postgresql://localhost:5432/h052'
+    username: postgres
+    password: Vietnam@123
+    initialization-mode: always
+    continue-on-error: true
+  jpa:
+    show-sql: false
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+  cache:
+    type: redis
+  redis:
+    host: 192.168.23.38
+    port: 6379
+  http:
+    log-request-details: true
+  servlet:
+    multipart:
+      max-file-size: 100MB
+      max-request-size: 100MB
+  devtools:
+    livereload:
+      enabled: true
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: hoangtamqn.ecoit@gmail.com
+    password: Tam12345d
+    properties:
+      mail:
+        smtp:
+          starttls:
+            enable: true
+            required: true
+          auth: true
+          connectiontimeout: 10000
+          timeout: 10000
+          writetimeout: 10000
+        transport:
+          protocol: smtp
+        debug: true
+        timezone: Asia/Tokyo
+sync: null
+logging:
+  level:
+    springfox:
+      documentation: ERROR
+    org:
+      springframework:
+        web: DEBUG
+    root: INFO
+front-end:
+  cas-login: 'http://192.168.10.12/#/authen?token='
+cas:
+  domain: 'https://192.168.10.102:8443/'
+  validate: 'https://192.168.10.102:8443/cas/validate?'
+  service-validate: 'https://192.168.10.102:8443/cas/proxyValidate?'
+  proxy-validate: 'https://192.168.10.102:8443/cas/proxyValidate?'
+  login: 'https://192.168.10.102:8443/cas/login'
+  logout: 'https://192.168.10.102:8443/cas/logout'
+  return-login: 'http://192.168.10.103:8080/cas/login'
+configs:
+  doc-out:
+    auto-finish-reply-doc: true
+  bpmn:
+    one-active-for-org: false
+    require-lead-under: true
+    send-siblings: true
+  doc-in:
+    set-deadline: true
+    return-previous-node: true
+    review-required: true
+    search-expired-by-process-deadline: false
+    internal-remove: true
+  doc-book:
+    org_config: true
+  user:
+    find_by_org_and_sub: true
+  van-thu-toan-don-vi: false
+  clerical-org: true
+  load-comment-by-org-and-position: false
+  load-comment-by-org-and-position-h05: false
+  task:
+    migrate-thread: true
+ftpConfigs:
+  host: 172.16.10.1
+  port: 21
+  timeout: 600000
+  username: bcy
+  password: bcy@bcy
+  active: true
+ocr:
+  domain: http://203.205.21.146:30005/gthc_pdf
+  remind:
+    remind_for_obj: false
+  sms-port: /dev/ttyUSB0
+ecm:
+  domain: http://172.16.10.70:8081
+  form:
+    register: /api/TiepNhan/tiepnhapyeucau
+  folder:
+    register: /api/TiepNhan/tiepnhaphoso

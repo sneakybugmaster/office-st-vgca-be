@@ -1,0 +1,11 @@
+target
+.settings
+.idea/
+/backend-website/encrypt_file/
+/backend-website/trash/
+/backend-website/uploads/
+/backend-website/delete/
+/backend-deploy/encrypt_file
+/backend-deploy/trash
+/backend-deploy/uploads
+/backend-deploy/.idea

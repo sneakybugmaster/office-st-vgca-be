@@ -1,0 +1,17 @@
+package com.vz.backend.business.service;
+
+import org.springframework.stereotype.Service;
+
+import com.vz.backend.business.domain.CalendarNotification;
+import com.vz.backend.core.repository.IRepository;
+import com.vz.backend.core.service.BaseService;
+
+@Service
+public class CalendarNotificationService extends BaseService<CalendarNotification> {
+
+	@Override
+	public IRepository<CalendarNotification> getRepository() {
+		return null;
+	}
+
+}

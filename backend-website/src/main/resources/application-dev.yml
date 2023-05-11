@@ -1,0 +1,168 @@
+server:
+  port: 8181
+spring:
+  datasource:
+    driver-class-name: org.postgresql.Driver
+#    url: jdbc:postgresql://localhost:5432/5105
+#    username: postgres
+#    password: 12345678
+
+    url: 'jdbc:postgresql://172.16.10.76:5432/office'
+    username: postgres
+    password: 123456
+    
+    initialization-mode: always
+    continue-on-error: true
+    hikari:
+      maximum-pool-size: 10
+
+  jpa:
+    show-sql: false
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+  cache:
+    type: redis
+  redis:
+    host: localhost
+    port: 6379
+  http:
+    log-request-details: true
+  servlet:
+    multipart:
+      max-file-size: 100MB
+      max-request-size: 100MB
+  devtools:
+    livereload:
+      enabled: true
+  mail:
+    host: smtp.yandex.com
+    port: 465
+    username: test1@ecoit.com.vn
+    password: nqabkwvlcqxrbima
+    properties:
+      mail:
+        smtp:
+          starttls:
+            enable: true
+            required: true
+          auth: true
+          connectiontimeout: 10000
+          timeout: 10000
+          writetimeout: 10000
+          ssl:
+            enable: true
+        transport:
+          protocol: smtp
+        debug: true
+        timezone: "Asia/Tokyo"
+front-end:
+  cas-login: 'http://office.bmho.bachmai.org.vn/authen?token='
+cas:
+  domain: 'https://bmho.bachmai.org.vn/'
+  validate: 'https://bmho.bachmai.org.vn/sso/validate?'
+  service-validate: 'https://bmho.bachmai.org.vn/sso/proxyValidate?'
+  proxy-validate: 'https://bmho.bachmai.org.vn/sso/proxyValidate?'
+  login: 'https://bmho.bachmai.org.vn/sso/login'
+  logout: 'https://bmho.bachmai.org.vn/sso/logout'
+  return-login: 'http://localhost:4200/cas/login'
+ftpConfigs:
+  host: 172.16.10.246
+  port: 21
+  timeout: 6000
+  username: bcy
+  password: bcy@bcy
+  active: false
+  
+sync:
+#  user: http://118.71.99.245:5006/o/ldap/app/get-list-user
+#  org: http://118.71.99.245:5006/o/ldap/app/get-organization-all
+#  position: http://118.71.99.245:5006/o/user/app/position/getall-chucvu
+configs:
+  doc-out:
+    auto-finish-reply-doc: true
+    print-issued-data: true
+  bpmn:
+    one-active-for-org: false
+    require-lead-under: false
+    send-siblings: true
+  doc-in:
+    set-deadline: true
+    return-previous-node: true
+    review-required: true
+    search-expired-by-process-deadline: false
+    auto-add-lead-transfer: false
+    main-require: false
+    internal-remove: true
+  doc-book:
+    org_config: true
+  user:
+    find_by_org_and_sub: true
+  van-thu-toan-don-vi: false
+  clerical-org: true
+  load-comment-by-org-and-position: false
+  load-comment-by-org-and-position-h05: false
+  genarate-phieu-trinh: true
+  auto-number-in-book-doc-out: true
+  previous-last-node-show-button-done: true
+  remind:
+    remind_for_obj : false
+  sort-by: CREATEDATE
+  ldap: false
+  ldap2:
+    orgId: 178
+    positionId: 312
+    clientId: 1
+    mail: '@ecoit.com'
+  common:
+    encrypt-files: true
+  token: #Millisecond
+    user-expire: 2592000000 #30 d (day)
+    client-expire: 2592000000
+    refresh-expire: 86400000 #1 d (day) condition : refresh-expire <= user-expire
+  mail: test1@ecoit.com.vn #mail admin
+  task:
+    migrate-thread: true
+  send-mail: false
+  dir-sync-vb:
+  main-office-org-id: 219
+  client-id: 1
+  default-sender-id: 393
+  default-doc-type-id: 23
+  custom-fonts-folder: D:\thinhhv\office\bmho\backend\backend-website\src\main\resources\static\fonts\
+  tmp-file-folder: D:\thinhhv\documents\temp
+  clerical-seal:
+    font-filename: times.ttf
+    seal-width-in-cm: 5
+    seal-height-in-cm: 3.5
+    seal-font-size: 12
+    seal-opacity: 0.7
+    seal-line-lmargin: 5
+    seal-line-indented-lmargin: 35
+
+
+
+ocr:
+  domain: http://172.16.10.23:30005/gthc_pdf
+ecm:
+  domain: http://172.16.10.70:8081
+  form:
+    register: /api/TiepNhan/tiepnhapyeucau
+  folder:
+    register: /api/TiepNhan/tiepnhaphoso
+logging:
+  level:
+    springfox:
+      documentation: ERROR
+    org:
+      springframework:
+        web: DEBUG
+    root: INFO
+alfresco:
+  domain: http://example.com
+  userId: 1
+  password: 1
+  parentId: 1
+  # sms-port: /dev/ttyUSB0
