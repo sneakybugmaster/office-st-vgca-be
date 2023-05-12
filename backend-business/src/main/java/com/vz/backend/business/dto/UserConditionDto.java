@@ -4,6 +4,7 @@ import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.vz.backend.business.domain.DocumentInProcess;
+import com.vz.backend.core.common.BussinessCommon;
 import com.vz.backend.core.domain.Category;
 import com.vz.backend.core.domain.User;
 
@@ -58,9 +59,9 @@ public class UserConditionDto extends UserPositionBase {
 		this(id, isDefault, breadth, isSiblings, org, position, positionName, positionOrder, fullName, userName, orgId,
 				positionId, userId);
 		if (secondPosition != null) {
-			this.lead = Boolean.TRUE.equals(isDefault) || secondPosition.getIsDefault();
-			this.breadth = Boolean.TRUE.equals(breadth) || secondPosition.getIsBreadth();
-			this.siblings = Boolean.TRUE.equals(isSiblings) || secondPosition.getIsSiblings();
+			this.lead = Boolean.TRUE.equals(isDefault) || BussinessCommon.getValueOrDefault(secondPosition.getIsDefault(), false);
+			this.breadth = Boolean.TRUE.equals(breadth) || BussinessCommon.getValueOrDefault(secondPosition.getIsBreadth(), false);
+			this.siblings = Boolean.TRUE.equals(isSiblings) || BussinessCommon.getValueOrDefault(secondPosition.getIsSiblings(), false);
 			this.positionId = secondPosition.getId();
 		}
 		this.forceSameOrg = Boolean.TRUE.equals(forceSameOrg);
