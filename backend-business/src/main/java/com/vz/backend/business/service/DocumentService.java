@@ -56,6 +56,8 @@ import java.nio.file.StandardCopyOption;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static com.vz.backend.core.config.Constant.INCOMING_STRING_LITERAL;
+
 @Service
 @Slf4j
 public class DocumentService extends BaseService<Documents> {
@@ -100,6 +102,8 @@ public class DocumentService extends BaseService<Documents> {
     INodeRepository2 nodeRepository2;
     @Autowired
     IAttachmentRepository attachmentRepository;
+    @Autowired
+    private PdfService pdfService;
     @Value("${configs.doc-in.internal-remove: false}")
     private boolean docInternalRemove;
     @Value("${configs.doc-in.return-previous-node: false}")
@@ -376,21 +380,24 @@ public class DocumentService extends BaseService<Documents> {
     }
 
     @Transactional
-    public Documents createDocument(Boolean receive, Documents doc, User u, Long clientId, Long orgReceiveId, Boolean createArrivalNumber) {
+    public Documents createDocument(Boolean receive, Documents doc, User u, Long clientId, Long orgReceiveId, Boolean createArrivalNumber, Boolean createResolveTicket) {
         if (!userService.isVanThuVBDen(u)) {
             throw new RestExceptionHandler(Message.NO_CREATE_DOC);
+        }
+
+        if (doc.getNumberOrSign() != null && !doc.getNumberOrSign().isEmpty()) {
+            if (isNumberOrSignExists(doc.getNumberOrSign(), null)) {
+                throw new RestExceptionHandler(Message.NUMBER_OR_SIGN_EXISTED);
+            }
         }
 
         doc.valids(createArrivalNumber);
         doc.setStatus(doc.getIsComplete() != null && doc.getIsComplete() ? DocumentStatusEnum.DONE : DocumentStatusEnum.NOT_YET);
         doc.setPersonEnterId(u.getId());
-        if (!Boolean.TRUE.equals(receive)) {
-            if (orgReceiveId == null) {
-                doc.setOrgReceiveId(u.getOrg());
-            } else {
-                doc.setOrgReceiveId(orgReceiveId);
-            }
-
+        if (orgReceiveId == null) {
+            doc.setOrgReceiveId(u.getOrg());
+        } else {
+            doc.setOrgReceiveId(orgReceiveId);
         }
         if (doc.getPersonSignId() != null) {
             User userSign = userService.findByClientIdAndId(u.getClientId(), doc.getPersonSignId());
@@ -409,11 +416,7 @@ public class DocumentService extends BaseService<Documents> {
         }
 
         // Nơi nhận bên ngoài khác
-        if (!StringUtils.isNullOrEmpty(doc.getPlaceSendOthers())) {
-            Category placeSendOthers = categoryService.save(doc.getPlaceSendOthers(), Constant.CAT_ORG_OTHER, "Nơi nhận bên ngoài");
-            doc.setPlaceSendId(placeSendOthers.getId());
-            doc.setPlaceSend(doc.getPlaceSendOthers());
-        }
+        addPlaceSendOthers(doc);
 
         List<Documents> document = this.findByClientIdAndNumberArrivalAndBookId(u.getClientId(),
                 doc.getNumberArrival(), doc.getBookId());
@@ -472,6 +475,30 @@ public class DocumentService extends BaseService<Documents> {
 
             // Delete notification
             noticeService.setActiveByDocIdAndDocType(doc.getId(), DocumentTypeEnum.VAN_BAN_DEN, false);
+
+            if (doc.getAutoCreateSeal()) {
+                List<Attachment> attachments = attService.findByObjIdCreateDateDesc(doc.getId());
+                if (!attachments.isEmpty()) {
+                    Attachment firstAttachment = attachments.get(0);
+                    try {
+                        if (firstAttachment.getType().equals("application/pdf")) {
+                            Path inputFilePath = fileService.getPath(firstAttachment.getName());
+                            String filenameParsed = FilesStorageService.parse(String.format("%s.pdf", doc.getNumberArrivalStr()));
+                            Path outputFilePath = fileService.getPath(filenameParsed);
+                            pdfService.addWatermarkToPDF(inputFilePath.toString(), outputFilePath.toString(), INCOMING_STRING_LITERAL, doc.getNumberArrivalStr(), doc.getDateIssued());
+
+                            Attachment clonedAttachment = firstAttachment.clone();
+                            clonedAttachment.setId(null);
+                            clonedAttachment.setName(filenameParsed);
+
+                            attService.save(clonedAttachment);
+                            attService.getRepository().delete(firstAttachment);
+                        }
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
         } else {
             // save tracking
             trackingServices.save(doc, DocumentInTrackingEnum.CREATE, u.getId(), clientId);
@@ -3542,5 +3569,17 @@ public class DocumentService extends BaseService<Documents> {
 
     public List<Documents> findByDocOutId(Long id) {
         return docRepository.findByDocOutId(id, BussinessCommon.getClientId());
+    }
+
+    private boolean isNumberOrSignExists(String numberOrSign, List<Long> excludeDocIds) {
+        return docRepository.isNumberOrSignExists(numberOrSign, BussinessCommon.getClientId(), excludeDocIds, true);
+    }
+
+    private void addPlaceSendOthers(Documents doc) {
+        if (!StringUtils.isNullOrEmpty(doc.getPlaceSendOthers())) {
+            Category placeSendOthers = categoryService.save(doc.getPlaceSendOthers(), Constant.CAT_ORG_OTHER, "Nơi nhận bên ngoài");
+            doc.setPlaceSendId(placeSendOthers.getId());
+            doc.setPlaceSend(doc.getPlaceSendOthers());
+        }
     }
 }

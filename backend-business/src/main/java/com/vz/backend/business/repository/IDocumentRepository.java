@@ -572,4 +572,7 @@ public interface IDocumentRepository extends IRepository<Documents> {
 
 	@Query("select d from Documents d where d.docOutId = :id and d.clientId = :clientId")
     List<Documents> findByDocOutId(Long id, Long clientId);
+
+	@Query("select count(d) > 0 from Documents d where d.numberOrSign = :numberOrSign and d.clientId = :clientId and d.active = :active and (:excludeDocIds is null or d.id not in (:excludeDocIds))")
+	boolean isNumberOrSignExists(String numberOrSign, Long clientId, List<Long> excludeDocIds, boolean active);
 }
