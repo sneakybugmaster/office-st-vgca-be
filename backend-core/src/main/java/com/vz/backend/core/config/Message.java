@@ -211,4 +211,5 @@ public class Message {
 	public static final String CLIENT_IAM_NOT_FOUND = "Client IAM không đúng !";
 	public static final String USER_LINK_IAM = "Tài khoản IAM đã được liên kết với tài khoản idoc khác !";
 	public static final String USER_NAME_IAM_MODIFIED = "Không được phép sửa tên đăng nhập !";
+	public static final String NUMBER_OR_SIGN_EXISTED = "Số và ký hiệu đã tồn tại!";
 }

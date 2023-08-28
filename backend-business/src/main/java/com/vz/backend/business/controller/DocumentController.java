@@ -235,7 +235,7 @@ public class DocumentController {
 	public ResponseEntity<Documents> create(@RequestParam(required = false) Boolean receive,
 			@RequestBody Documents doc) {
 		User u = BussinessCommon.getUser();
-		Documents newDoc = docService.createDocument(receive, doc, u, BussinessCommon.getClientId(), null, true);
+		Documents newDoc = docService.createDocument(receive, doc, u, BussinessCommon.getClientId(), null, true, true);
 
 		return new ResponseEntity<>(newDoc, HttpStatus.OK);
 	}

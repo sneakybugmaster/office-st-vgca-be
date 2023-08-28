@@ -253,4 +253,9 @@ public class AttachmentService extends BaseService<Attachment> {
     public List<FolderAttachmentDto> getByFolderIds(List<Long> folderIds) {
         return attachmentRepository.getByFolderIds(folderIds, BussinessCommon.getClientId());
     }
+
+    public List<Attachment> findByObjIdCreateDateDesc(Long objId) {
+        return attachmentRepository.findByDocIdCreateDateAsc(objId, BussinessCommon.getClientId());
+    }
+
 }

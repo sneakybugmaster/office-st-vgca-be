@@ -50,5 +50,7 @@ public class Attachment extends AttachmentBase {
 		super(name, type, size);
 		this.documentId = documentId;
 	}
-	
+	public Attachment clone() throws CloneNotSupportedException {
+		return (Attachment) super.clone();
+	}
 }

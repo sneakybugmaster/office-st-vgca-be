@@ -110,6 +110,8 @@ public class Constant {
 
 	public static final String ORG_NAME_UPPER = "VỤ KHOA HỌC CÔNG NGHỆ";
 
+	public static final String INCOMING_STRING_LITERAL = "ĐẾN";
+
 	// hết hạn client
 	public static final String TOKEN_H03 = "Cục H03";
 	public static final String TOKEN_H05 = "Bộ công an H05";

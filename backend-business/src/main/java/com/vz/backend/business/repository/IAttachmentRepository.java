@@ -35,4 +35,7 @@ public interface IAttachmentRepository extends IRepository<Attachment> {
 	@Query("SELECT at from Attachment at WHERE at.documentId in (:documentIds)  and at.active is true and at.clientId =:clientId")
 	List<Attachment>  findByListDocId(List<Long> documentIds , Long clientId);
 
+	@Query("select a from Attachment a where a.documentId = :docId and a.active = true and a.clientId = :clientId order by a.createDate asc")
+	List<Attachment> findByDocIdCreateDateAsc(Long docId, Long clientId);
+
 }
