@@ -152,6 +152,10 @@ public class DocumentDto {
 		return this.read == null ? false : this.read;
 	}
 
+	public DocumentDto(Documents doc, DocumentInProcess p, Boolean important, DocumentOut documentOut) {
+		this(doc, p, null, important, documentOut);
+	}
+
 	public DocumentDto(Documents doc, DocumentInProcess p, Boolean read, Boolean important, DocumentOut documentOut) {
 		this.doc = doc;
 		this.processId = p.getId();
