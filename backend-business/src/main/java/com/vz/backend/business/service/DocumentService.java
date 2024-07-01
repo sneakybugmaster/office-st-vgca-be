@@ -386,7 +386,8 @@ public class DocumentService extends BaseService<Documents> {
         }
 
         if (doc.getNumberOrSign() != null && !doc.getNumberOrSign().isEmpty()) {
-            if (isNumberOrSignExists(doc.getNumberOrSign(), null)) {
+            List<Long> excludeDocIds = doc.getId() != null ? Collections.singletonList(doc.getId()) : null;
+            if (isNumberOrSignExists(doc.getNumberOrSign(),  clientId, excludeDocIds)) {
                 throw new RestExceptionHandler(Message.NUMBER_OR_SIGN_EXISTED);
             }
         }
