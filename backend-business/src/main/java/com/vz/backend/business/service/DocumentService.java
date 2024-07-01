@@ -3571,8 +3571,8 @@ public class DocumentService extends BaseService<Documents> {
         return docRepository.findByDocOutId(id, BussinessCommon.getClientId());
     }
 
-    private boolean isNumberOrSignExists(String numberOrSign, List<Long> excludeDocIds) {
-        return docRepository.isNumberOrSignExists(numberOrSign, BussinessCommon.getClientId(), excludeDocIds, true);
+    private boolean isNumberOrSignExists(String numberOrSign, final long clientId, List<Long> excludeDocIds) {
+        return docRepository.isNumberOrSignExists(numberOrSign, clientId, excludeDocIds, true);
     }
 
     private void addPlaceSendOthers(Documents doc) {
