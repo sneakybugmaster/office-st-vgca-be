@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 
 import com.vz.backend.business.domain.ObjectRead;
@@ -86,4 +87,12 @@ public class ObjectReadService extends BaseService<ObjectRead> {
 		}
 		return false;
 	}
+
+	public List<ObjectRead> findAllByObjIdInAndUserIdInAndTypeAndClientIdAndActive(
+			final @NonNull List<Long> objIds, final @NonNull List<Long> userIds,
+			final @NonNull DocumentTypeEnum documentType) {
+		return this.objReadRepository.findAllByObjIdInAndUserIdInAndTypeAndClientIdAndActive(
+				objIds, userIds, documentType, BussinessCommon.getClientId(), true );
+	}
+
 }

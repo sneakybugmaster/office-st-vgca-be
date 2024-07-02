@@ -41,47 +41,43 @@ public interface IDocumentRepository extends IRepository<Documents> {
 			Long docTypeId, Long docFieldsId, List<DocumentStatusEnum> docStatusIds, Long statusReceiptId,
 			Long clientId, Pageable pageable);
 
-	@Query("SELECT NEW com.vz.backend.business.dto.DocumentDto(d, p, ob.read, du.important, do)"
-            + " FROM Documents d JOIN DocumentInProcess p ON p.docId = d.id AND p.active = TRUE "
-            + " LEFT JOIN NodeModel2 node on node.id = p.node "
-            + " LEFT JOIN DocumentUser du ON du.docId = d.id AND du.userId in (:userIds) AND du.docType = :docType "
-            + " LEFT JOIN ObjectRead ob ON ob.objId = d.id AND ob.userId in (:userIds) AND ob.type = 'VAN_BAN_DEN' "
-            + " LEFT JOIN Condition con ON node.id = con.nodeId " +
-            " LEFT JOIN DocumentOut do on d.docOutId = do.id and do.active is true"
-            + " WHERE (:numberOrSign IS NULL OR LOWER(d.numberOrSign) LIKE %:numberOrSign%) "
-            + " AND ((:mergedLines IS NULL AND (d.mergedLines IS NULL OR d.mergedLines IS FALSE)) OR (d.mergedLines = :mergedLines)) "
-            + " AND (:preview IS NULL OR LOWER(d.preview) LIKE %:preview% )  "
-            + " AND (:text IS NULL OR LOWER(d.numberOrSign) LIKE %:text% OR LOWER(d.preview) LIKE %:text%) "
-            + " AND (:dayLeft IS NULL"
-            + "		OR :dayLeft = "
-            + "				CASE WHEN (COALESCE(p.deadline, NULL) IS NOT NULL AND (p.deadline < current_date())) THEN -1 "
-            + "					 WHEN (COALESCE(p.deadline, NULL) IS NULL OR p.deadline > current_date() + 2)  THEN 3 "
-            + "					 ELSE 0 END)"
-            + " AND (:endTask IS NULL"
-            + "		OR :endTask = "
-            + "				CASE WHEN d.status IN ('DOING', 'RETURN_DOC') AND p.endTask IS TRUE THEN 2 "
-            + "					 WHEN d.status = 'DONE' THEN 2 "
-            + "					 WHEN d.status IN ('DOING', 'RETURN_DOC') AND p.endTask IS NULL THEN 0 "
-            + "					 ELSE NULL END ) "
-            + " AND (:docTypeId IS NULL OR d.docTypeId = :docTypeId) "
-            + " AND (:docFieldsId IS NULL OR d.docFieldsId = :docFieldsId) "
-            + " AND (d.clientId = :clientId AND p.clientId = :clientId AND d.active = true AND p.active = TRUE) "
-            + " AND ((:docStatusIds) IS NULL OR d.status in (:docStatusIds)) "
-            + " AND ((:userIds) IS NULL OR p.toUser in (:userIds) OR p.delegaterId in (:userIds)) "
-            + " AND p.handleStatus IN (:handleStatus)"
-            + " AND ((:handleType) IS NULL OR  p.handleType IN (:handleType)) "
-            + " AND (:important IS NULL OR  (:important = FALSE AND du.important IS NULL) OR du.important = :important) "
-            + " AND (:expired IS NULL OR (:expired IS TRUE AND d.deadline != NULL AND (:now > d.deadline)) OR (:expired IS FALSE AND (d.deadline IS NULL OR (:now <= d.deadline)))) "
-//			+ " AND (d.id, p.step) IN (SELECT sp.docId, MAX(sp.step) FROM DocumentInProcess sp WHERE sp.active = TRUE AND sp.clientId = :clientId "
-//			+ "		AND (sp.toUser = :userId OR sp.delegaterId = :userId) "
-//			+ "		GROUP BY sp.docId)"
-            + " AND p.id IN (:pId) AND (:posId IS NULL or con.positionId = :posId)"
-            + " GROUP BY d, p, ob.read, du.important, do"
-			)
+	@Query("SELECT NEW com.vz.backend.business.dto.DocumentDto(d, p, du.important, do)"
+			+ " FROM Documents d JOIN DocumentInProcess p ON p.docId = d.id AND p.active = TRUE "
+			+ " LEFT JOIN NodeModel2 node on node.id = p.node "
+			+ " LEFT JOIN DocumentUser du ON du.docId = d.id AND du.userId in (:userIds) AND du.docType = :docType "
+			+ " LEFT JOIN Condition con ON node.id = con.nodeId " +
+			" LEFT JOIN DocumentOut do on d.docOutId = do.id and do.active is true"
+			+ " WHERE (:numberOrSign IS NULL OR LOWER(d.numberOrSign) LIKE %:numberOrSign%) "
+			+ " AND ((:mergedLines IS NULL AND (d.mergedLines IS NULL OR d.mergedLines IS FALSE)) OR (d.mergedLines = :mergedLines)) "
+			+ " AND (:preview IS NULL OR LOWER(d.preview) LIKE %:preview% )  "
+			+ " AND (:text IS NULL OR LOWER(d.numberOrSign) LIKE %:text% OR LOWER(d.preview) LIKE %:text% OR LOWER(d.numberArrivalStr) LIKE %:text%) "
+			+ " AND (:dayLeft IS NULL"
+			+ "		OR :dayLeft = "
+			+ "				CASE WHEN (COALESCE(p.deadline, NULL) IS NOT NULL AND (p.deadline < current_date())) THEN -1 "
+			+ "					 WHEN (COALESCE(p.deadline, NULL) IS NULL OR p.deadline > current_date() + 2)  THEN 3 "
+			+ "					 ELSE 0 END)"
+			+ " AND (:endTask IS NULL"
+			+ "		OR :endTask = "
+			+ "				CASE WHEN d.status IN ('DOING', 'RETURN_DOC') AND p.endTask IS TRUE THEN 2 "
+			+ "					 WHEN d.status = 'DONE' THEN 2 "
+			+ "					 WHEN d.status IN ('DOING', 'RETURN_DOC') AND p.endTask IS NULL THEN 0 "
+			+ "					 ELSE NULL END ) "
+			+ " AND (:docTypeId IS NULL OR d.docTypeId = :docTypeId) "
+			+ " AND (:docFieldsId IS NULL OR d.docFieldsId = :docFieldsId) "
+			+ " AND (d.clientId = :clientId AND p.clientId = :clientId AND d.active = true AND p.active = TRUE) "
+			+ " AND (COALESCE(:docStatusIds, NULL) IS NULL OR d.status in (:docStatusIds)) "
+			+ " AND (COALESCE(:userIds, NULL) IS NULL OR p.toUser in (:userIds) OR p.delegaterId in (:userIds)) "
+			+ " AND p.handleStatus IN (:handleStatus)"
+			+ " AND (COALESCE(:handleType, NULL) IS NULL OR  p.handleType IN (:handleType)) "
+			+ " AND (:important IS NULL OR  (:important = FALSE AND du.important IS NULL) OR du.important = :important) "
+			+ " AND (:expired IS NULL OR (:expired IS TRUE AND p.deadline != NULL AND (:now > p.deadline)) OR (:expired IS FALSE AND (p.deadline IS NULL OR (:now <= p.deadline)))) "
+			+ " AND (COALESCE(:pId, NULL) IS NULL OR  p.id IN (:pId)) AND (:posId IS NULL or con.positionId = :posId)"
+			+ " GROUP BY d, p, du.important, do"
+	)
 	Page<DocumentDto> findByMultiConditions(Integer endTask, Boolean mergedLines, String text, Integer dayLeft, Boolean expired, Date now, Boolean important,
-			DocumentTypeEnum docType, List<Long> userIds, List<DocumentStatusEnum> docStatusIds,
-			List<DocumentInHandleStatusEnum> handleStatus, List<HandleTypeEnum> handleType, String numberOrSign,
-			String preview, Long docTypeId, Long docFieldsId, List<Long> pId, Long clientId, Long posId, Pageable pageable);
+											DocumentTypeEnum docType, List<Long> userIds, List<DocumentStatusEnum> docStatusIds,
+											List<DocumentInHandleStatusEnum> handleStatus, List<HandleTypeEnum> handleType, String numberOrSign,
+											String preview, Long docTypeId, Long docFieldsId,List<Long> pId, Long clientId, Long posId, Pageable pageable);
 
 
 	@Query("select new com.vz.backend.business.dto.document.DocumentDto(d, case " +

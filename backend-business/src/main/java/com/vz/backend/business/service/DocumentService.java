@@ -29,6 +29,7 @@ import com.vz.backend.core.service.*;
 import com.vz.backend.core.util.StreamUtils;
 import com.vz.backend.util.DateTimeUtils;
 import com.vz.backend.util.StringUtils;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.ArrayUtils;
@@ -60,6 +61,7 @@ import static com.vz.backend.core.config.Constant.INCOMING_STRING_LITERAL;
 
 @Service
 @Slf4j
+@RequiredArgsConstructor
 public class DocumentService extends BaseService<Documents> {
 
     @Autowired
@@ -169,6 +171,9 @@ public class DocumentService extends BaseService<Documents> {
     private StraceSystemService straceService;
     @Autowired
     private DocumentReceiveService documentReceiveService;
+
+    private final ObjectReadService objectReadService;
+
     private Set<Long> all = new HashSet<>();
 
     private final Map<Long, Category> tmpCategoryMap = new HashMap<>();
@@ -1042,15 +1047,20 @@ public class DocumentService extends BaseService<Documents> {
 
             Set<Long> setNodeValid = nodeRepo.validNode(setNode, org, u.getPosition(), u.getId(), setOrg);
             List<CategoryDto> mapHandle = docRepository.findNextHandle(docIdList, u.getClientId());
+            List<Long> docIds = rsList.stream().map(DocumentDto::getDocId).distinct().collect(Collectors.toList());
+            List<ObjectRead> objectReads = objectReadService.findAllByObjIdInAndUserIdInAndTypeAndClientIdAndActive(
+                    docIds, userIds, DocumentTypeEnum.VAN_BAN_DEN);
+
             rsList.forEach(dto -> {
+                boolean read = objectReads.stream()
+                        .anyMatch(it -> it.getObjId() != null && it.getObjId().equals(dto.getDocId()));
+                dto.setRead(read);
                 Long docId = dto.getDoc().getId();
                 Long nodeId = doc2Node.get(docId);
                 dto.getButton().setAllowConfig(setNodeValid.contains(nodeId)); //gia hạn xử lý
                 Optional<CategoryDto> o = mapHandle.stream().filter(i -> dto.getDoc().getId().equals(i.getId()))
                         .findFirst();
-                if (o.isPresent()) {
-                    dto.setNextHandle(o.get().getName());
-                }
+                o.ifPresent(categoryDto -> dto.setNextHandle(categoryDto.getName()));
             });
         }
 
