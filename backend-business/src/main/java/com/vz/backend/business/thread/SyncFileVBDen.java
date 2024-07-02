@@ -186,6 +186,8 @@ public class SyncFileVBDen implements Runnable {
                         document.setCreateBy(clerical.getId());
                         document.setClientId(clientId);
 
+                        log.info("document number or sign {}", document.getNumberOrSign());
+
                         document = documentService.createDocument(false, document, clerical, clientId, mainOfficeOrgId, false, false);
                         document.setStatus(DocumentStatusEnum.WAIT_RECEIVE);
 

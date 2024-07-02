@@ -386,7 +386,8 @@ public class DocumentService extends BaseService<Documents> {
         }
 
         if (doc.getNumberOrSign() != null && !doc.getNumberOrSign().isEmpty()) {
-            if (isNumberOrSignExists(doc.getNumberOrSign(), null)) {
+            List<Long> excludeDocIds = doc.getId() != null ? Collections.singletonList(doc.getId()) : null;
+            if (isNumberOrSignExists(doc.getNumberOrSign(),  clientId, excludeDocIds)) {
                 throw new RestExceptionHandler(Message.NUMBER_OR_SIGN_EXISTED);
             }
         }
@@ -3571,8 +3572,8 @@ public class DocumentService extends BaseService<Documents> {
         return docRepository.findByDocOutId(id, BussinessCommon.getClientId());
     }
 
-    private boolean isNumberOrSignExists(String numberOrSign, List<Long> excludeDocIds) {
-        return docRepository.isNumberOrSignExists(numberOrSign, BussinessCommon.getClientId(), excludeDocIds, true);
+    private boolean isNumberOrSignExists(String numberOrSign, final long clientId, List<Long> excludeDocIds) {
+        return docRepository.isNumberOrSignExists(numberOrSign, clientId, excludeDocIds, true);
     }
 
     private void addPlaceSendOthers(Documents doc) {
