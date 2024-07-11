@@ -227,11 +227,13 @@ public class Constant {
 			+ ")"
 		;
 
-	public static final String PID_QUERY = 
-			" SELECT p.id FROM vz.SYS_DOCUMENT_IN_PROCESS p "
-			+ " INNER JOIN (SELECT p1.doc_id , MAX(p1.step) as step FROM vz.SYS_DOCUMENT_IN_PROCESS p1 WHERE p1.active = TRUE AND p1.client_id =:clientId "
-			+ " AND p1.to_user in(:userIds) OR p1.delegater_id in(:userIds) GROUP BY p1.doc_id ) gd ON gd.doc_id = p.doc_id AND gd.step = p.step";
-	
+	public static final String PID_QUERY =
+			" SELECT p.id FROM vz.SYS_DOCUMENT_IN_PROCESS p " +
+					" INNER JOIN (SELECT p1.doc_id , MAX(p1.step) as step FROM vz.SYS_DOCUMENT_IN_PROCESS p1 WHERE p1.active = TRUE AND p1.client_id =:clientId " +
+					" AND (p1.to_user in(:userIds) OR p1.delegater_id in(:userIds)) GROUP BY p1.doc_id ) gd ON gd.doc_id = p.doc_id AND gd.step = p.step " +
+					" where (p.to_user in(:userIds) OR p.delegater_id in(:userIds)) " +
+					" group by p.doc_id, p.id";
+
 	public static final String SIGNER_NAME_DOCUMENT_OUT_QUERY = 
 			"SELECT u.id AS id, u.full_name AS fullName, o.name AS orgName, c.name AS position, u.phone AS phone FROM vz.SYS_USER u"
 			+ " INNER JOIN vz.SYS_ORGANIZATION o ON o.id = u.org_id"
