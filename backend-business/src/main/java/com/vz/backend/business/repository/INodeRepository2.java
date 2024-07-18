@@ -78,6 +78,9 @@ public interface INodeRepository2 extends IRepository<NodeModel2> {
     @Query("SELECT c FROM NodeModel2 c WHERE c.active IS TRUE AND c.id = :nodeId and c.clientId =:clientId")
     NodeModel2 getByIdAndClientId(Long nodeId, Long clientId);
 
+    @Query("SELECT c FROM NodeModel2 c WHERE c.active IS TRUE AND c.id IN :nodeIds and c.clientId =:clientId")
+    List<NodeModel2> getByIdsAndClientId(List<Long> nodeIds, Long clientId);
+
     @Query("select count(1) > 0 from NodeModel2 nodeModel where nodeModel.id in ( select node.next.id from NodeModel2 node where node.prevId in (:id)) and type = 'endEvent'")
     Boolean isPreviousNextNode(Long id);
 

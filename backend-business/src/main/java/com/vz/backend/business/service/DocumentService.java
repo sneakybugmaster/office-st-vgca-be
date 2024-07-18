@@ -55,6 +55,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static com.vz.backend.core.config.Constant.INCOMING_STRING_LITERAL;
@@ -1026,15 +1027,15 @@ public class DocumentService extends BaseService<Documents> {
             Map<Long, List<NodeDto>> nextNodeIds = bpmnService.getNextNodes(nodeIds, typeDocument);
             Map<Long, List<NodeDto>> dataByNodeIds = bpmnService.getDataByNodeId(nodeIds);
             Map<Long, Boolean> hasAskToUsers = manipulationService.hasAskToUser(docIdList, u.getId());
-            Map<Long, DocumentInProcess> pMaps = processService.getLastStepByDocId(docIdList);
-            Boolean leaderUnit = authorityService.isUserHasAuthority(BussinessCommon.getUserId(), null, AuthorityEnum.LEADERSHIP_UNIT);
+
+            Map<Long, NodeModel2> idToNodeModel2 = this.idToNodeModel2(rsList);
             for (DocumentDto dto : rsList) {
                 Documents doc = dto.getDoc();
                 if (doc == null) {
                     continue;
                 }
                 if (dto.getNode() != null && dto.getNode() != 0) {
-                    NodeModel2 nodeModel2 = nodeRepository2.getByIdAndClientId(dto.getNode(), BussinessCommon.getClientId());
+                    NodeModel2 nodeModel2 = idToNodeModel2.get(dto.getNode());
                     if (nodeModel2 != null) {
                         dto.setBpmnId(nodeModel2.getBpmnId());
                         dto.setBpmnName(nodeModel2.getBpmn().getName());
@@ -1042,7 +1043,7 @@ public class DocumentService extends BaseService<Documents> {
                 }
                 doc2Node.put(doc.getId(), dto.getProcessNode());
                 setNode.add(dto.getProcessNode());
-                setBtn(dto, nextNodeIds, dataByNodeIds, hasAskToUsers, leaderUnit, pMaps);
+                setBtn(dto, nextNodeIds, dataByNodeIds, hasAskToUsers);
             }
 
             Set<Long> setNodeValid = nodeRepo.validNode(setNode, org, u.getPosition(), u.getId(), setOrg);
@@ -1067,8 +1068,27 @@ public class DocumentService extends BaseService<Documents> {
         return BussinessCommon.paging(rsPage);
     }
 
+
+    private Map<Long, NodeModel2> idToNodeModel2(List<DocumentDto> documentDtos) {
+        // get nodeids
+        List<Long> nodeIds = new ArrayList<>();
+        for (DocumentDto dto : documentDtos) {
+            Documents doc = dto.getDoc();
+            if (doc == null) {
+                continue;
+            }
+            if (dto.getNode() != null && dto.getNode() != 0) {
+                nodeIds.add(dto.getNode());
+            }
+        }
+
+        // query
+        List<NodeModel2> nodes = this.nodeRepo.getByIdsAndClientId(nodeIds, BussinessCommon.getClientId());
+        return nodes.stream().collect(Collectors.toMap(NodeModel2::getId, Function.identity()));
+    }
+
     private void setBtn(DocumentDto docDto, Map<Long, List<NodeDto>> nextNodeIds,
-                        Map<Long, List<NodeDto>> dataByNodeIds, Map<Long, Boolean> hasAskToUsers, Boolean leaderUnit, Map<Long, DocumentInProcess> pMaps) {
+                        Map<Long, List<NodeDto>> dataByNodeIds, Map<Long, Boolean> hasAskToUsers) {
         Documents doc = docDto.getDoc();
         ButtonDto dto = new ButtonDto();
         boolean lastNode = false;
