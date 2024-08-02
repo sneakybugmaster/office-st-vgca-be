@@ -394,7 +394,7 @@ public class DocumentService extends BaseService<Documents> {
         if (doc.getNumberOrSign() != null && !doc.getNumberOrSign().isEmpty()) {
             List<Long> excludeDocIds = doc.getId() != null ? Collections.singletonList(doc.getId()) : null;
             if (isNumberOrSignExists(doc.getNumberOrSign(),  clientId, excludeDocIds)) {
-                throw new RestExceptionHandler(Message.NUMBER_OR_SIGN_EXISTED);
+                throw new NumberOrSignExistsException("Văn bản đến" + doc.getNumberOrSign() + " đã tồn tại");
             }
         }
 
