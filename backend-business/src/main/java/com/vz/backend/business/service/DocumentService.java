@@ -9,6 +9,7 @@ import com.vz.backend.business.dto.*;
 import com.vz.backend.business.dto.document.ButtonDto;
 import com.vz.backend.business.dto.document.ResolvedDocumentDto;
 import com.vz.backend.business.dto.document.ResolvedUserDto;
+import com.vz.backend.business.exception.NumberOrSignExistsException;
 import com.vz.backend.business.repository.IAttachmentRepository;
 import com.vz.backend.business.repository.IClericalOrgRepository;
 import com.vz.backend.business.repository.IDocumentRepository;
@@ -386,12 +387,12 @@ public class DocumentService extends BaseService<Documents> {
     }
 
     @Transactional
-    public Documents createDocument(Boolean receive, Documents doc, User u, Long clientId, Long orgReceiveId, Boolean createArrivalNumber, Boolean createResolveTicket) {
+    public Documents createDocument(Boolean receive, Documents doc, User u, Long clientId, Long orgReceiveId, Boolean createArrivalNumber, Boolean createResolveTicket, boolean checkNumberOrSignExists) {
         if (!userService.isVanThuVBDen(u)) {
             throw new RestExceptionHandler(Message.NO_CREATE_DOC);
         }
 
-        if (doc.getNumberOrSign() != null && !doc.getNumberOrSign().isEmpty()) {
+        if ( checkNumberOrSignExists && doc.getNumberOrSign() != null && !doc.getNumberOrSign().isEmpty()) {
             List<Long> excludeDocIds = doc.getId() != null ? Collections.singletonList(doc.getId()) : null;
             if (isNumberOrSignExists(doc.getNumberOrSign(),  clientId, excludeDocIds)) {
                 throw new NumberOrSignExistsException("Văn bản đến" + doc.getNumberOrSign() + " đã tồn tại");

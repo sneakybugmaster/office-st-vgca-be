@@ -4,6 +4,7 @@ import com.vz.backend.business.domain.Documents;
 import com.vz.backend.business.dto.CustomMultipartFile;
 import com.vz.backend.business.dto.DocOutSyncDto;
 import com.vz.backend.business.dto.DocOutValueDateSyncDto;
+import com.vz.backend.business.exception.NumberOrSignExistsException;
 import com.vz.backend.business.repository.IClericalOrgRepository;
 import com.vz.backend.business.repository.IDocumentRepository;
 import com.vz.backend.business.repository.IDocumentUserRepository;
@@ -188,7 +189,7 @@ public class SyncFileVBDen implements Runnable {
 
                         log.info("document number or sign {}", document.getNumberOrSign());
 
-                        document = documentService.createDocument(false, document, clerical, clientId, mainOfficeOrgId, false, false);
+                        document = documentService.createDocument(false, document, clerical, clientId, mainOfficeOrgId, false, false, false);
                         document.setStatus(DocumentStatusEnum.WAIT_RECEIVE);
 
                         documentRepository.save(document);
@@ -199,13 +200,7 @@ public class SyncFileVBDen implements Runnable {
 
                         attachmentService.addAttachment(multipartFile, document.getId(), clientId, clerical.getId());
 
-                        Path folderImported = Paths.get(dir, "imported");
-                        if (!Files.exists(folderImported)) {
-                            Files.createDirectory(folderImported);
-                        }
-
-
-                        Files.move(path, Paths.get(String.valueOf(folderImported), fileName), StandardCopyOption.REPLACE_EXISTING);
+                        moveFileCreateDirectory(dir, path, fileName, "imported");
                         //Files.delete(path);
                         log.info("file {}, successfully imported", fileName);
 
@@ -214,6 +209,15 @@ public class SyncFileVBDen implements Runnable {
             }
         }
         return hashMap;
+    }
+
+    private static void moveFileCreateDirectory(String targetPart, Path source, String targetFileName, String... targetPathMore) throws IOException {
+        Path targetFolder = Paths.get(targetPart, targetPathMore);
+        if (!Files.exists(targetFolder)) {
+            Files.createDirectory(targetFolder);
+        }
+
+        Files.move(source, Paths.get(String.valueOf(targetFolder), targetFileName), StandardCopyOption.REPLACE_EXISTING);
     }
 
 
