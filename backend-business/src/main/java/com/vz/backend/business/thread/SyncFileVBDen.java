@@ -4,6 +4,7 @@ import com.vz.backend.business.domain.Documents;
 import com.vz.backend.business.dto.CustomMultipartFile;
 import com.vz.backend.business.dto.DocOutSyncDto;
 import com.vz.backend.business.dto.DocOutValueDateSyncDto;
+import com.vz.backend.business.dto.DocOutValueSyncDto;
 import com.vz.backend.business.exception.NumberOrSignExistsException;
 import com.vz.backend.business.repository.IClericalOrgRepository;
 import com.vz.backend.business.repository.IDocumentRepository;
@@ -128,6 +129,11 @@ public class SyncFileVBDen implements Runnable {
                     if (!filesStorageService.getFile(fileName).isFile()) {
                         /*Thực hiện tạo vb theo file đang sync*/
 
+                        if (fileName.isEmpty() || !fileName.toLowerCase().endsWith(".pdf")) {
+                            moveFileCreateDirectory(dir, path, fileName, "failed");
+                            continue;
+                        }
+
                         Resource resource = new UrlResource(path.toUri());
                         // Call OCR lấy nội dung văn bản
                         LinkedMultiValueMap<String, Object> parts = new LinkedMultiValueMap<>();
@@ -143,32 +149,31 @@ public class SyncFileVBDen implements Runnable {
                         // End Call OCR lấy nội dung văn bản
                         // add thông tin vào document thành văn bản đến tiếp nhận
 
-                        Category placeSend;
-                        placeSend = categoryRepository.findByNameAndCodeAndClientIdCaseInsensitive(object.getValue().getCo_quan_ban_hanh(), "DVN", clientId);
-                        if (placeSend == null) {
-                            try {
-                                placeSend = categoryRepository.getOne(defaultSenderId);
-                            } catch (EntityNotFoundException e) {
-                                throw new RuntimeException(String.format("An entity provided for default-receiver-org-id cannot be found, id %s", defaultSenderId));
-                            }
-                            if (!placeSend.getActive()) {
-                                throw new RuntimeException(String.format("Category Id: %s is not an active Category", defaultSenderId));
-                            }
+                        Category placeSend = null;
+                        DocOutValueSyncDto value = object.getValue();
+                        log.info("Document OCR value {}", value);
+                        String issuedOrgName = value.getCo_quan_ban_hanh();
+
+                        boolean hasIssuedOrgName = org.springframework.util.StringUtils.hasText(issuedOrgName);
+                        if (!hasIssuedOrgName) {
+                            log.info("OCR failed to read issued Organization name for file {} ", path);
+                            moveFileCreateDirectory(dir, path, fileName, "failed");
+                            continue;
                         }
 
-                        DocOutValueDateSyncDto issuedDateDto = object.getValue().getNgay_ban_hanh();
-                        DocOutValueDateSyncDto receivedDateDto = object.getValue().getNgay_den();
+                        DocOutValueDateSyncDto issuedDateDto = value.getNgay_ban_hanh();
+                        DocOutValueDateSyncDto receivedDateDto = value.getNgay_den();
 
                         String summary;
-                        if (object.getValue().getTrich_yeu() != null) {
-                            summary = object.getValue().getTrich_yeu();
+                        if (value.getTrich_yeu() != null) {
+                            summary = value.getTrich_yeu();
                         } else {
                             summary = "Trích yếu mặc định";
                         }
 
                         Category documentType = null;
-                        if (object.getValue().getTen_van_ban() != null) {
-                            documentType = categoryRepository.findByNameAndCodeAndClientIdCaseInsensitive(object.getValue().getTen_van_ban(), "LVB", clientId);
+                        if (value.getTen_van_ban() != null) {
+                            documentType = categoryRepository.findByNameAndCodeAndClientIdCaseInsensitive(value.getTen_van_ban(), "LVB", clientId);
                         }
 
                         // Try parse String to Date. If an exception throws, set Date to current Date.
@@ -177,11 +182,13 @@ public class SyncFileVBDen implements Runnable {
 
                         Documents document = new Documents();
                         document.setIsImported(true);
-                        document.setPlaceSendId(placeSend.getId());
+                        if (placeSend != null && placeSend.getId() != null) {
+                            document.setPlaceSendId(placeSend.getId());
+                        }
                         document.setDateArrival(issuedDate);
                         document.setDateIssued(arrivalDate);
                         document.setReceivedDate(arrivalDate);
-                        document.setNumberOrSign(object.getValue().getSo_ky_hieu());
+                        document.setNumberOrSign(value.getSo_ky_hieu());
                         document.setDocTypeId(documentType != null ? documentType.getId() : defaultDocTypeId);
                         document.setPreview(summary);
                         document.setCreateBy(clerical.getId());
