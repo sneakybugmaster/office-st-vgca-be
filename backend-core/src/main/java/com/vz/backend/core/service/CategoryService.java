@@ -382,4 +382,29 @@ public class CategoryService extends BaseService<Category> {
 	public Category findByClientIdAndNameAndCode(String code, String name) {
 		return categoryRepository.findByNameAndCode(name, code);
 	}
+
+
+	public Category findByNameAndCodeAndClientIdCaseInsensitive(String name, String code, Long clientId) {
+		return categoryRepository.findByNameAndCodeAndClientIdCaseInsensitive(name, code, clientId);
+	}
+
+	public Category findOrCreateCategoryByNameAndCode(final String name,
+													  final String code,
+													  final long clientId,
+													  final long userId) {
+		Category existedCategory = findByNameAndCodeAndClientIdCaseInsensitive(name, code, clientId);
+		if (existedCategory == null) {
+			Category category = new Category();
+			category.setName(name);
+			category.setCode(code);
+			category.setCreateBy(userId);
+			category.setUpdateBy(userId);
+			category.setClientId(clientId);
+			CategoryType cType = catTypeService.findByClientIdAndCode(clientId, code);
+			category.setCategoryTypeId(cType.getId());
+			existedCategory = save(category);
+		}
+		return existedCategory;
+	}
+
 }

@@ -17,6 +17,7 @@ import com.vz.backend.core.config.DocumentStatusEnum;
 import com.vz.backend.core.domain.Category;
 import com.vz.backend.core.domain.User;
 import com.vz.backend.core.repository.ICategoryRepository;
+import com.vz.backend.core.service.CategoryService;
 import com.vz.backend.core.service.FilesStorageService;
 import com.vz.backend.util.DateTimeUtils;
 import com.vz.backend.util.StringUtils;
@@ -83,6 +84,8 @@ public class SyncFileVBDen implements Runnable {
 
     @Autowired
     private CommonService commonService;
+    @Autowired
+    private CategoryService categoryService;
 
     private static Date parseDate(DocOutValueDateSyncDto dateDto) {
         Date date;
@@ -160,6 +163,8 @@ public class SyncFileVBDen implements Runnable {
                             moveFileCreateDirectory(dir, path, fileName, "failed");
                             continue;
                         }
+                        placeSend = categoryService.findOrCreateCategoryByNameAndCode(issuedOrgName, "DVN", clientId, 1);
+
 
                         DocOutValueDateSyncDto issuedDateDto = value.getNgay_ban_hanh();
                         DocOutValueDateSyncDto receivedDateDto = value.getNgay_den();
