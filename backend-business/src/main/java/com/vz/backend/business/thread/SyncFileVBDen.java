@@ -67,18 +67,12 @@ public class SyncFileVBDen implements Runnable {
     private FilesStorageService filesStorageService;
 
     @Autowired
-    private ICategoryRepository categoryRepository;
-    @Autowired
     private IDocumentRepository documentRepository;
     @Autowired
     private DocumentService documentService;
 
     @Autowired
     private IClericalOrgRepository clericalOrgRepository;
-    @Autowired
-    private IDocumentUserRepository documentUserRepository;
-    @Autowired
-    private IObjectReadRepository objectReadRepository;
     @Autowired
     private AttachmentService attachmentService;
 
@@ -178,7 +172,10 @@ public class SyncFileVBDen implements Runnable {
 
                         Category documentType = null;
                         if (value.getTen_van_ban() != null) {
-                            documentType = categoryRepository.findByNameAndCodeAndClientIdCaseInsensitive(value.getTen_van_ban(), "LVB", clientId);
+                            List<Category> categories = categoryService.findByNameAndCodeAndClientIdCaseInsensitive(value.getTen_van_ban(), "LVB", clientId);
+                            if (!categories.isEmpty()) {
+                                documentType = categories.get(0);
+                            }
                         }
 
                         // Try parse String to Date. If an exception throws, set Date to current Date.
