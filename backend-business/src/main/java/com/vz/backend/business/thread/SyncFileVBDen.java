@@ -4,6 +4,8 @@ import com.vz.backend.business.domain.Documents;
 import com.vz.backend.business.dto.CustomMultipartFile;
 import com.vz.backend.business.dto.DocOutSyncDto;
 import com.vz.backend.business.dto.DocOutValueDateSyncDto;
+import com.vz.backend.business.dto.DocOutValueSyncDto;
+import com.vz.backend.business.exception.NumberOrSignExistsException;
 import com.vz.backend.business.repository.IClericalOrgRepository;
 import com.vz.backend.business.repository.IDocumentRepository;
 import com.vz.backend.business.repository.IDocumentUserRepository;
@@ -15,6 +17,7 @@ import com.vz.backend.core.config.DocumentStatusEnum;
 import com.vz.backend.core.domain.Category;
 import com.vz.backend.core.domain.User;
 import com.vz.backend.core.repository.ICategoryRepository;
+import com.vz.backend.core.service.CategoryService;
 import com.vz.backend.core.service.FilesStorageService;
 import com.vz.backend.util.DateTimeUtils;
 import com.vz.backend.util.StringUtils;
@@ -64,8 +67,6 @@ public class SyncFileVBDen implements Runnable {
     private FilesStorageService filesStorageService;
 
     @Autowired
-    private ICategoryRepository categoryRepository;
-    @Autowired
     private IDocumentRepository documentRepository;
     @Autowired
     private DocumentService documentService;
@@ -73,14 +74,12 @@ public class SyncFileVBDen implements Runnable {
     @Autowired
     private IClericalOrgRepository clericalOrgRepository;
     @Autowired
-    private IDocumentUserRepository documentUserRepository;
-    @Autowired
-    private IObjectReadRepository objectReadRepository;
-    @Autowired
     private AttachmentService attachmentService;
 
     @Autowired
     private CommonService commonService;
+    @Autowired
+    private CategoryService categoryService;
 
     private static Date parseDate(DocOutValueDateSyncDto dateDto) {
         Date date;
@@ -127,6 +126,11 @@ public class SyncFileVBDen implements Runnable {
                     if (!filesStorageService.getFile(fileName).isFile()) {
                         /*Thực hiện tạo vb theo file đang sync*/
 
+                        if (fileName.isEmpty() || !fileName.toLowerCase().endsWith(".pdf")) {
+                            moveFileCreateDirectory(dir, path, fileName, "failed");
+                            continue;
+                        }
+
                         Resource resource = new UrlResource(path.toUri());
                         // Call OCR lấy nội dung văn bản
                         LinkedMultiValueMap<String, Object> parts = new LinkedMultiValueMap<>();
@@ -142,32 +146,36 @@ public class SyncFileVBDen implements Runnable {
                         // End Call OCR lấy nội dung văn bản
                         // add thông tin vào document thành văn bản đến tiếp nhận
 
-                        Category placeSend;
-                        placeSend = categoryRepository.findByNameAndCodeAndClientIdCaseInsensitive(object.getValue().getCo_quan_ban_hanh(), "DVN", clientId);
-                        if (placeSend == null) {
-                            try {
-                                placeSend = categoryRepository.getOne(defaultSenderId);
-                            } catch (EntityNotFoundException e) {
-                                throw new RuntimeException(String.format("An entity provided for default-receiver-org-id cannot be found, id %s", defaultSenderId));
-                            }
-                            if (!placeSend.getActive()) {
-                                throw new RuntimeException(String.format("Category Id: %s is not an active Category", defaultSenderId));
-                            }
-                        }
+                        Category placeSend = null;
+                        DocOutValueSyncDto value = object.getValue();
+                        log.info("Document OCR value {}", value);
+                        String issuedOrgName = value.getCo_quan_ban_hanh();
 
-                        DocOutValueDateSyncDto issuedDateDto = object.getValue().getNgay_ban_hanh();
-                        DocOutValueDateSyncDto receivedDateDto = object.getValue().getNgay_den();
+                        boolean hasIssuedOrgName = org.springframework.util.StringUtils.hasText(issuedOrgName);
+                        if (!hasIssuedOrgName) {
+                            log.info("OCR failed to read issued Organization name for file {} ", path);
+                            moveFileCreateDirectory(dir, path, fileName, "failed");
+                            continue;
+                        }
+                        placeSend = categoryService.findOrCreateCategoryByNameAndCode(issuedOrgName, "DVN", clientId, 1);
+
+
+                        DocOutValueDateSyncDto issuedDateDto = value.getNgay_ban_hanh();
+                        DocOutValueDateSyncDto receivedDateDto = value.getNgay_den();
 
                         String summary;
-                        if (object.getValue().getTrich_yeu() != null) {
-                            summary = object.getValue().getTrich_yeu();
+                        if (value.getTrich_yeu() != null) {
+                            summary = value.getTrich_yeu();
                         } else {
                             summary = "Trích yếu mặc định";
                         }
 
                         Category documentType = null;
-                        if (object.getValue().getTen_van_ban() != null) {
-                            documentType = categoryRepository.findByNameAndCodeAndClientIdCaseInsensitive(object.getValue().getTen_van_ban(), "LVB", clientId);
+                        if (value.getTen_van_ban() != null) {
+                            List<Category> categories = categoryService.findByNameAndCodeAndClientIdCaseInsensitive(value.getTen_van_ban(), "LVB", clientId);
+                            if (!categories.isEmpty()) {
+                                documentType = categories.get(0);
+                            }
                         }
 
                         // Try parse String to Date. If an exception throws, set Date to current Date.
@@ -176,11 +184,13 @@ public class SyncFileVBDen implements Runnable {
 
                         Documents document = new Documents();
                         document.setIsImported(true);
-                        document.setPlaceSendId(placeSend.getId());
+                        if (placeSend != null && placeSend.getId() != null) {
+                            document.setPlaceSendId(placeSend.getId());
+                        }
                         document.setDateArrival(issuedDate);
                         document.setDateIssued(arrivalDate);
                         document.setReceivedDate(arrivalDate);
-                        document.setNumberOrSign(object.getValue().getSo_ky_hieu());
+                        document.setNumberOrSign(value.getSo_ky_hieu());
                         document.setDocTypeId(documentType != null ? documentType.getId() : defaultDocTypeId);
                         document.setPreview(summary);
                         document.setCreateBy(clerical.getId());
@@ -188,7 +198,7 @@ public class SyncFileVBDen implements Runnable {
 
                         log.info("document number or sign {}", document.getNumberOrSign());
 
-                        document = documentService.createDocument(false, document, clerical, clientId, mainOfficeOrgId, false, false);
+                        document = documentService.createDocument(false, document, clerical, clientId, mainOfficeOrgId, false, false, false);
                         document.setStatus(DocumentStatusEnum.WAIT_RECEIVE);
 
                         documentRepository.save(document);
@@ -199,13 +209,7 @@ public class SyncFileVBDen implements Runnable {
 
                         attachmentService.addAttachment(multipartFile, document.getId(), clientId, clerical.getId());
 
-                        Path folderImported = Paths.get(dir, "imported");
-                        if (!Files.exists(folderImported)) {
-                            Files.createDirectory(folderImported);
-                        }
-
-
-                        Files.move(path, Paths.get(String.valueOf(folderImported), fileName), StandardCopyOption.REPLACE_EXISTING);
+                        moveFileCreateDirectory(dir, path, fileName, "imported");
                         //Files.delete(path);
                         log.info("file {}, successfully imported", fileName);
 
@@ -214,6 +218,15 @@ public class SyncFileVBDen implements Runnable {
             }
         }
         return hashMap;
+    }
+
+    private static void moveFileCreateDirectory(String targetPart, Path source, String targetFileName, String... targetPathMore) throws IOException {
+        Path targetFolder = Paths.get(targetPart, targetPathMore);
+        if (!Files.exists(targetFolder)) {
+            Files.createDirectory(targetFolder);
+        }
+
+        Files.move(source, Paths.get(String.valueOf(targetFolder), targetFileName), StandardCopyOption.REPLACE_EXISTING);
     }
 
 

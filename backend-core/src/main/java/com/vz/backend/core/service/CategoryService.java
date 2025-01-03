@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import lombok.NonNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -382,4 +383,33 @@ public class CategoryService extends BaseService<Category> {
 	public Category findByClientIdAndNameAndCode(String code, String name) {
 		return categoryRepository.findByNameAndCode(name, code);
 	}
+
+
+	public List<Category> findByNameAndCodeAndClientIdCaseInsensitive(String name, String code, Long clientId) {
+		return categoryRepository.findByNameAndCodeAndClientIdCaseInsensitive(name, code, clientId);
+	}
+
+	public Category findOrCreateCategoryByNameAndCode(final @NonNull String name,
+													  final String code,
+													  final long clientId,
+													  final long userId) {
+		final String trimmedName = name.trim();
+		Category resultCategory;
+		List<Category> existedCategories = findByNameAndCodeAndClientIdCaseInsensitive(trimmedName, code, clientId);
+		if (existedCategories.isEmpty()) {
+			Category category = new Category();
+			category.setName(trimmedName);
+			category.setCode(code + System.currentTimeMillis());
+			category.setCreateBy(userId);
+			category.setUpdateBy(userId);
+			category.setClientId(clientId);
+			CategoryType cType = catTypeService.findByClientIdAndCode(clientId, code);
+			category.setCategoryTypeId(cType.getId());
+			resultCategory = save(category);
+		}else {
+			resultCategory = existedCategories.get(0);
+		}
+		return resultCategory;
+	}
+
 }

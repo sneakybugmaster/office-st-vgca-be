@@ -70,7 +70,7 @@ public interface ICategoryRepository extends IRepository<Category>, ICategoryRep
 	Category findByClientIdAndNameAndCategoryCode(String name, String code, Long clientId);
 
 	@Query("SELECT c FROM Category c WHERE lower(:name) = lower(c.name) and c.categoryType.code = :code and c.clientId=:clientId and c.active IS TRUE")
-	Category findByNameAndCodeAndClientIdCaseInsensitive(String name, String code, Long clientId);
+	List<Category> findByNameAndCodeAndClientIdCaseInsensitive(String name, String code, Long clientId);
 
 	@Query(value = "select count(1) > 0 from Category c join CategoryType t on c.categoryTypeId = t.id "
 			+ "where c.clientId = :clientId and t.clientId =:clientId and t.code = :code and t.active = true and c.active = true and c.id=:id")
